@@ -6,10 +6,10 @@ class PaginationTool {
 
     private $currentP, $itemsPP, $parameters, $total;
 
-    function __construct($total, $currentP = 1, $itemsPP = 10, $parameters = []) {
+    function __construct($total, $currentP = 1, $parameters = [], $itemsPP = 10) {
         $this->total = $total;
         $this->itemsPP = $itemsPP;
-        $this->currentP = $currentP;
+        $this->currentP = max(intval($currentP), 1);
         $this->parameters = $parameters;
     }
 
@@ -24,36 +24,62 @@ class PaginationTool {
     function links($onEachSide = 3) {
         $links = [];
         $first = [
+            'active' => $this->currentP != $this->first(),
+            'current' => false,
             'number' => $this->first(),
             'text' => '&lsaquo;&lsaquo;',
-            'url' => '??'
+            'url' => $this->route($this->first())
         ];
         $previous = [
+            'active' => $this->currentP != $this->first(),
+            'current' => false,
             'number' => $this->previous(),
             'text' => '&lsaquo;',
-            'url' => '??'
+            'url' => $this->route($this->previous())
         ];
         $current = [
+            'active' => false,
+            'current' => true,
             'number' => $this->currentP,
             'text' => $this->currentP,
-            'url' => '??'
+            'url' => $this->route($this->currentP)
         ];
         $next = [
+            'active' => $this->currentP != $this->last(),
+            'current' => false,
             'number' => $this->next(),
             'text' => '&rsaquo;',
-            'url' => '??'
+            'url' => $this->route($this->next())
         ];
         $last = [
+            'active' => $this->currentP != $this->last(),
+            'current' => false,
             'number' => $this->last(),
             'text' => '&rsaquo;&rsaquo;',
-            'url' => '??'
+            'url' => $this->route($this->last())
         ];
         $links[] = $first;
         $links[] = $previous;
+        if($this->currentP == $this->first()){
+            $links[] = [
+                'active' => false,
+                'current' => false,
+                'text' => '...',
+            ];
+        }
         $testing = -$onEachSide;
         while($testing <= $onEachSide) {
             if($testing != 0) {
-                $links[] = ['number' => ($this->currentP + $testing), 'url' => '??'];
+                $page = $this->currentP + $testing;
+                if($page > 0  && $page <= $this->last()) {
+                    $links[] = [
+                        'active' => true,
+                        'current' => false,
+                        'number' => $page,
+                        'text' => $page, 
+                        'url' => $this->route($page)
+                    ];
+                }
             } else {
                 $links[] = $current;
             }
@@ -61,7 +87,7 @@ class PaginationTool {
         }
         $links[] = $next;
         $links[] = $last;
-        dd($links);
+        //dd($links);
         return $links;
     }
 
@@ -72,5 +98,14 @@ class PaginationTool {
     function previous() {
         return max($this->currentP - 1, 1); //Si da negativo devuelve 1
     }
-
+    
+    function current() {
+        return $this->currentP;
+    }
+    
+    private function route($page){
+        $parameters = $this->parameters['parameters'];
+        $parameters['page'] = $page;
+        return route($this->parameters['route'], $parameters);
+    }
 }

@@ -70,10 +70,16 @@ class YateController extends Controller {
     }
 
     function handmade(Request $request) {
+        $paremeters =            
+            [
+                'route' => 'yate.handmade',
+                'parameters' => [
+                    'q' => $request->input('q', ''),
+                    'orderby' => $request->input('orderby'),
+                    'ordertype' => $request->input('ordertype')
+                ]
+            ];
         $page = $request->input('page', 1);
-        $rows = 1000;
-        $paginator = new PaginationTool($rows, $page);
-        $links = $paginator->links();
         //$links = [];
 
         //parámetros
@@ -89,6 +95,11 @@ class YateController extends Controller {
                 join users on yate.iduser = users.id
                 join astillero on yate.idastillero = astillero.id
                 join tipo on yate.idtipo = tipo.id';
+        $select_count = 'select count(*) total
+                            from yate
+                            join users on yate.iduser = users.id
+                            join astillero on yate.idastillero = astillero.id
+                            join tipo on yate.idtipo = tipo.id';
         $where = '';
         $parameters = [];
         if($q != '') {
@@ -113,11 +124,20 @@ class YateController extends Controller {
         if($orderby != self::ORDER_BY) {
             $orderby .= ', ' . self::ORDER_BY . ' ' . self::ORDER_TYPE;
         }
-        $init = ($page - 1) * self::ITEMS_PER_PAGE;
-        //$init = ($paginator->current() - 1) * self::ITEMS_PER_PAGE;
+        // $init = ($page - 1) * self::ITEMS_PER_PAGE;
+        $count = $select_count . ' ' . $where;
+        $total = DB::select($count, $parameters);
+        $rows = $total[0]->total;
+        
+        $paginator = new PaginationTool($rows, $page, $paremeters);
+        $init = ($paginator->current() - 1) * self::ITEMS_PER_PAGE;
+        
         $limit = 'limit ' . $init . ', ' . self::ITEMS_PER_PAGE;
         $sql = $select . ' ' . $where . ' ' . $orderby . ' ' . $limit;
         //dd([$sql, $parameters]);
+        
+        $links = $paginator->links();
+        
         $yates = DB::select($sql, $parameters);
         //dd([$sql, $result]);
         return view('yate.handmade',
