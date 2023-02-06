@@ -60,7 +60,7 @@ class PaginationTool {
         ];
         $links[] = $first;
         $links[] = $previous;
-        if($this->currentP == $this->first()){
+        if($this->currentP > $onEachSide + 1) {
             $links[] = [
                 'active' => false,
                 'current' => false,
@@ -84,6 +84,13 @@ class PaginationTool {
                 $links[] = $current;
             }
             $testing++;
+        }
+        if($this->currentP + $onEachSide < $this->last()) {
+            $links[] = [
+                'active' => false,
+                'current' => false,
+                'text' => '...',
+            ];
         }
         $links[] = $next;
         $links[] = $last;
